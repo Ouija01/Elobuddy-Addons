@@ -8,6 +8,7 @@ using EloBuddy.SDK.Menu;
 using EloBuddy.SDK.Menu.Values;
 using EloBuddy.SDK.Rendering;
 using SharpDX;
+using System.Drawing;
 
 //TODO: Damage Calculator, Jungle Clear.
 
@@ -23,7 +24,7 @@ namespace CoKennen
 
         private static Spell.Active R;
 
-        public static Menu FirstMenu, DrawMenu, ComboMenu, HarassMenu, LaneClearMenu, MiscMenu, KillStealMenu;
+        public static Menu FirstMenu, DrawMenu, ComboMenu, HarassMenu, LaneClearMenu, MiscMenu, KillStealMenu, JungleClearMenu;
 
         private static AIHeroClient me => Player.Instance;
 
@@ -34,9 +35,9 @@ namespace CoKennen
             Loading.OnLoadingComplete += GameLoad;
         }
 
-        //Damages
+            //Damages
 
-        public static float QDamage(Obj_AI_Base target)
+            public static float QDamage(Obj_AI_Base target)
         {
             if (Q.IsReady())
                 return Player.Instance.CalculateDamageOnUnit(target, DamageType.Magical,
@@ -69,10 +70,44 @@ namespace CoKennen
             return 0f;
         }
 
+        private static void OnUpdate(EventArgs args)
+        {
+            KillSteal();
+        }
+
+        private static void GameOnTick(EventArgs args)
+        {
+            if (Player.Instance.IsDead) return;
+
+            if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
+            { Combo(); }
+            if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Harass))
+            { Harass(); }
+            if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.LaneClear))
+            { LaneClear(); }
+            if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.JungleClear))
+            { JungleClear(); }
+
+        }
+
+        private static void InitEvents()
+        {
+            Gapcloser.OnGapcloser += Gapcloser_OnGapcloser;
+            Orbwalker.OnUnkillableMinion += Orbwalker_OnUnkillableMinion;
+            Game.OnTick += GameOnTick;
+            Game.OnUpdate += OnUpdate;
+        }
+
         //GameLoad
 
         private static void GameLoad(EventArgs args)
         {
+            InitEvents();
+
+            //Damage Calculator (soon)
+
+
+
             //Spells
 
             Q = new Spell.Skillshot(SpellSlot.Q, 1050, SkillShotType.Linear, 250, 1650, 50)
@@ -83,6 +118,7 @@ namespace CoKennen
             E = new Spell.Active(SpellSlot.E, uint.MaxValue, DamageType.Magical);
 
             R = new Spell.Active(SpellSlot.R, 550, DamageType.Magical);
+
 
 
             //Drawing Exection
@@ -154,13 +190,27 @@ namespace CoKennen
 
             LaneClearMenu.Add("LaneClearW", new CheckBox("Use W", true));
 
-            LaneClearMenu.Add("EnergyManger", new Slider("Stop using skills for at {0}", 100, 0, 200));
+            LaneClearMenu.Add("EnergyManger", new Slider("Stop using skills at {0}", 100, 0, 200));
 
             LaneClearMenu.Add("LaneClearE", new CheckBox("Use E", false));
 
             LaneClearMenu.Add("LaneClearR", new CheckBox("Use R", false));
 
-            LaneClearMenu.Add("LaneClearCountManager", new Slider("Use R if minions Exceed {0}", 15, 0, 40));
+            LaneClearMenu.Add("LaneClearCountManager", new Slider("Use R if minions Exceed or Equal {0}", 15, 0, 40));
+
+            //JungleClear Menu
+
+            JungleClearMenu = FirstMenu.AddSubMenu("Jungle Clear", "JungleClear");
+
+            JungleClearMenu.AddGroupLabel("Jungle Clear Menu");
+
+            JungleClearMenu.Add("JungleClearQ", new CheckBox("Use Q", true));
+
+            JungleClearMenu.Add("JungleClearW", new CheckBox("Use W", true));
+
+            JungleClearMenu.Add("JungleClearE", new CheckBox("Use E", true));
+
+            LaneClearMenu.Add("EnergyManger", new Slider("Stop using skills at {0}", 100, 0, 200));
 
             //Killsteal Menu
 
@@ -195,6 +245,8 @@ namespace CoKennen
             MiscMenu.Add("LasthitMisc", new CheckBox(" Use Q to last hit?", true));
 
             MiscMenu.Add("LashitMiscW", new CheckBox("Use W to last hit?", false));
+
+            MiscMenu.Add("DamageIndicator", new CheckBox("Show Killable? (placeholder)", false));
         }
 
         //Drawing Call Method
@@ -213,6 +265,7 @@ namespace CoKennen
                 Combo();
             }
         }
+
 
         //Combo Function
 
@@ -351,6 +404,46 @@ namespace CoKennen
             }
         }
 
+        //Jungle Clear
+
+        public static void JungleClear()
+        {
+            var monster = ObjectManager.Get<Obj_AI_Minion>().Where(x => x.IsMonster && x.IsValidTarget(Q.Range)).OrderBy(x => x.Health).LastOrDefault();
+            if (monster == null || !monster.IsValid) return;
+            if (Orbwalker.IsAutoAttacking) return;
+            Orbwalker.ForcedTarget = null;
+            if (JungleClearMenu["JungleClearQ"].Cast<CheckBox>().CurrentValue
+                && Player.Instance.Mana > JungleClearMenu["EnergyManager"].Cast<Slider>().CurrentValue
+                && Q.IsReady())
+            {
+                Q.Cast(monster);
+            }
+
+            var wmonster = ObjectManager.Get<Obj_AI_Minion>().Where(x => x.IsMonster && x.IsValidTarget(W.Range)).OrderBy(x => x.Health).LastOrDefault();
+            if (wmonster == null || !wmonster.IsValid) return;
+            if (Orbwalker.IsAutoAttacking) return;
+            Orbwalker.ForcedTarget = null;
+            if (JungleClearMenu["JungleClearW"].Cast<CheckBox>().CurrentValue
+                && Player.Instance.ManaPercent > JungleClearMenu["EnergyManager"].Cast<Slider>().CurrentValue
+                && wmonster.HasBuff("kennenmarkofstorm"))
+            {
+                if (Player.Instance.Mana > JungleClearMenu["EnergyManager"].Cast<Slider>().CurrentValue)
+                {
+                    W.Cast();
+                }
+            }
+
+            if (JungleClearMenu["JungleClearE"].Cast<CheckBox>().CurrentValue
+               && Player.Instance.Mana > JungleClearMenu["EnergyManager"].Cast<Slider>().CurrentValue)
+            {
+                if (E.IsReady())
+                {
+                    E.Cast();
+                }
+            }
+
+        }
+
         //Misc Function
 
         public static void Orbwalker_OnUnkillableMinion(Obj_AI_Base target, Orbwalker.UnkillableMinionArgs args)
@@ -425,17 +518,17 @@ namespace CoKennen
         {
             if (DrawMenu["drawQrange"].Cast<CheckBox>().CurrentValue)
             {
-                Circle.Draw(Q.IsLearned ? Color.Aquamarine : Color.Zero, Q.Range, me.Position);
+                Circle.Draw(Q.IsLearned ? SharpDX.Color.Aquamarine : SharpDX.Color.Zero, Q.Range, me.Position);
             }
 
             if (DrawMenu["drawWrange"].Cast<CheckBox>().CurrentValue)
             {
-                Circle.Draw(W.IsLearned ? Color.Green : Color.Zero, W.Range, me.Position);
+                Circle.Draw(W.IsLearned ? SharpDX.Color.Green : SharpDX.Color.Zero, W.Range, me.Position);
             }
 
             if (DrawMenu["drawRrange"].Cast<CheckBox>().CurrentValue)
             {
-                Circle.Draw(R.IsLearned ? Color.AliceBlue : Color.Zero, R.Range, me.Position);
+                Circle.Draw(R.IsLearned ? SharpDX.Color.AliceBlue : SharpDX.Color.Zero, R.Range, me.Position);
             }
         }
     }
