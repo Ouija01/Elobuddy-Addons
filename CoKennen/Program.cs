@@ -9,6 +9,7 @@ using EloBuddy.SDK.Menu.Values;
 using EloBuddy.SDK.Rendering;
 using SharpDX;
 using System.Drawing;
+using SharpDX.Direct3D9;
 
 //TODO: Damage Calculator, Jungle Clear.
 
@@ -16,6 +17,7 @@ namespace CoKennen
 {
     internal class Program
     {
+    
         private static Spell.Skillshot Q;
 
         private static Spell.Active W;
@@ -102,10 +104,11 @@ namespace CoKennen
 
         private static void GameLoad(EventArgs args)
         {
+            // Initalizing Events
+
             InitEvents();
 
             //Damage Calculator (soon)
-
 
 
             //Spells
@@ -242,9 +245,19 @@ namespace CoKennen
 
             MiscMenu.Add("MiscGapcloser", new CheckBox("Use E as gapclose?", true));
 
+            MiscMenu.AddGroupLabel("Last Hit");
+
             MiscMenu.Add("LasthitMisc", new CheckBox(" Use Q to last hit?", true));
 
             MiscMenu.Add("LashitMiscW", new CheckBox("Use W to last hit?", false));
+
+            MiscMenu.AddGroupLabel("Skin Viewer");
+
+            MiscMenu.Add("SkinManagerActivate", new CheckBox("Use Skins?", true));
+
+            MiscMenu.Add("SkinManager", new Slider("SkinID", 1, 1, 7));
+
+            MiscMenu.AddGroupLabel("Damage Indicator");
 
             MiscMenu.Add("DamageIndicator", new CheckBox("Show Killable? (placeholder)", false));
         }
@@ -449,7 +462,7 @@ namespace CoKennen
         public static void Orbwalker_OnUnkillableMinion(Obj_AI_Base target, Orbwalker.UnkillableMinionArgs args)
         {
             if (target == null || Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo)) return;
-            if (args.RemainingHealth <= QDamage(target) && MiscMenu["LasthitMisc"].Cast<CheckBox>().CurrentValue)
+            if (args.RemainingHealth < QDamage(target) && MiscMenu["LasthitMisc"].Cast<CheckBox>().CurrentValue)
             {
                 Q.Cast(target);
             }
@@ -458,6 +471,19 @@ namespace CoKennen
             {
                 W.Cast();
             }
+
+            if (MiscMenu["SkinManagerActivate"].Cast<CheckBox>().CurrentValue) Player.SetSkinId(MiscMenu["SkinManager"].Cast<Slider>().CurrentValue);
+            MiscMenu["SkinManager"].Cast<Slider>().OnValueChange += (sender, vargs) =>
+            {
+                if (MiscMenu["SkinManagerActivate"].Cast<CheckBox>().CurrentValue) Player.SetSkinId(vargs.NewValue);
+            };
+            MiscMenu["SkinManagerActivate"].Cast<CheckBox>().OnValueChange += (sender, vargs) =>
+            {
+                if (vargs.NewValue)
+                    Player.SetSkinId(MiscMenu["SkinManager"].Cast<Slider>().CurrentValue);
+                else
+                    Player.SetSkinId(0);
+            };
         }
 
         public static void Gapcloser_OnGapcloser(AIHeroClient sender, Gapcloser.GapcloserEventArgs args)
