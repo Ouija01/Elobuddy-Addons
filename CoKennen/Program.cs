@@ -26,7 +26,7 @@ namespace CoKennen
 
         private static Spell.Active R;
 
-        public static Menu FirstMenu, DrawMenu, ComboMenu, HarassMenu, LaneClearMenu, MiscMenu, KillStealMenu, JungleClearMenu;
+        public static Menu FirstMenu, DrawMenu, ComboMenu, HarassMenu, LaneClearMenu, MiscMenu, KillStealMenu, JungleClearMenu, ActivatorMenu;
 
         private static AIHeroClient me => Player.Instance;
 
@@ -236,6 +236,17 @@ namespace CoKennen
             DrawMenu.Add("drawWrange", new CheckBox("Draw W", false));
 
             DrawMenu.Add("drawRrange", new CheckBox("Draw R", true));
+
+            //Activator
+
+            ActivatorMenu = FirstMenu.AddSubMenu("Activator", "activator123");
+
+            ActivatorMenu.AddGroupLabel("Activator");
+
+            ActivatorMenu.Add("ActivateZhonyas", new CheckBox("Use Zhonyas When Ult?", false));
+
+            ActivatorMenu.Add("ActivateProtoBelt", new CheckBox("Use ProtoBelt?", true));
+
 
             //Misc (Finished)
 
@@ -454,6 +465,28 @@ namespace CoKennen
                     E.Cast();
                 }
             }
+
+        }
+
+        //Activator Function
+
+        public static void Activator()
+        {
+            var Count = EntityManager.Heroes.Enemies.Count(x => x.IsValid && R.IsInRange(x));
+            var target = TargetSelector.GetTarget(450f,DamageType.Magical);
+            var targetZ = TargetSelector.GetTarget(R.Range, DamageType.Magical);
+
+            if (ActivatorMenu["ActivateZhonyas"].Cast<CheckBox>().CurrentValue && R.IsReady() && Item.CanUseItem(ItemId.Zhonyas_Hourglass))
+            {
+                Item.UseItem(ItemId.Zhonyas_Hourglass, targetZ);
+            }
+
+            if (ActivatorMenu["ActivateProtoBelt"].Cast<CheckBox>().CurrentValue &&
+                Item.CanUseItem(ItemId.Hextech_Protobelt_01))
+            {
+                Item.UseItem(ItemId.Hextech_Protobelt_01, target);
+            }
+
 
         }
 
