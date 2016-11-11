@@ -12,3 +12,6 @@ C:\Users\Khaled\documents\visual studio 2015\Projects\CoCassiopia\CoCassiopia\ob
 C:\Users\Khaled\Documents\Visual Studio 2015\Projects\Elobuddy-Addons\CoCassiopia\CoCassiopia\bin\Debug\CoCassiopia.exe.config
 C:\Users\Khaled\Documents\Visual Studio 2015\Projects\Elobuddy-Addons\CoCassiopia\CoCassiopia\obj\Debug\CoCassiopia.exe
 C:\Users\Khaled\Documents\Visual Studio 2015\Projects\Elobuddy-Addons\CoCassiopia\CoCassiopia\obj\Debug\CoCassiopia.pdb
+C:\Users\Khaled\Documents\Visual Studio 2015\Projects\Elobuddy-Addons\CoCassiopeia\CoCassiopia\bin\Debug\CoCassiopia.exe.config
+C:\Users\Khaled\Documents\Visual Studio 2015\Projects\Elobuddy-Addons\CoCassiopeia\CoCassiopia\obj\Debug\CoCassiopia.exe
+C:\Users\Khaled\Documents\Visual Studio 2015\Projects\Elobuddy-Addons\CoCassiopeia\CoCassiopia\obj\Debug\CoCassiopia.pdb

@@ -69,22 +69,33 @@ namespace CoCassiopeia
             return 0f;
         }
 
+        private static void OnUpdate(EventArgs args)
+        {
+            KillSteal();
+        }
+
+
         private static void GameOnTick(EventArgs args)
         {
             if (Player.Instance.IsDead) return;
 
             if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
-            {
-                Combo();
-            }
+            { Combo(); }
             if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Harass))
-            {
-                Harass();
-            }
+            { Harass(); }
             if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.LaneClear))
-            {
-                LaneClear();
-            }
+            { LaneClear(); }
+            if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.JungleClear))
+            { JungleClear(); }
+
+        }
+
+        private static void InitEvents()
+        {
+            Gapcloser.OnGapcloser += Gapcloser_OnGapcloser;
+            Orbwalker.OnUnkillableMinion += Orbwalker_OnUnkillableMinion;
+            Game.OnTick += GameOnTick;
+            Game.OnUpdate += OnUpdate;
         }
 
         //Loading Function
@@ -107,6 +118,14 @@ namespace CoCassiopeia
             E = new Spell.Targeted(SpellSlot.E, 700, DamageType.Magical);
 
             R = new Spell.Chargeable(SpellSlot.R, 825, 825, 03, 250, null, null, DamageType.Magical);
+
+            //Initinazling Events
+
+            InitEvents();
+
+            //Drawings 
+
+            EloBuddy.Drawing.OnDraw += Drawing;
 
             //Chat Print
 
@@ -196,6 +215,23 @@ namespace CoCassiopeia
             MiscMenu.Add("GapcloserW", new CheckBox("Gapclose With W? (stop dashes)", true));
             MiscMenu.Add("DamageIndicator", new CheckBox("Damage Indicator (placeholder)", true));
 
+        }
+
+        //Drawing Things
+
+        private static void Drawing(EventArgs args)
+        {
+            Drawing();
+        }
+
+        //On Tick
+
+        private static void OnTick(EventArgs args)
+        {
+            if (Orbwalker.ActiveModesFlags.Equals(Orbwalker.ActiveModes.Combo))
+            {
+                Combo();
+            }
         }
 
         //Combo Method
@@ -463,7 +499,7 @@ namespace CoCassiopeia
 
         //Draw Method
 
-        private static void Draw()
+        private static void Drawing()
         {
             if (DrawMenu["DrawQ"].Cast<CheckBox>().CurrentValue && Q.IsReady())
             {
