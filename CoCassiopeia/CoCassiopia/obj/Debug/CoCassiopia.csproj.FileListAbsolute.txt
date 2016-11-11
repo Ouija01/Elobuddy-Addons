@@ -1,0 +1,12 @@
+c:\users\khaled\documents\visual studio 2015\Projects\CoCassiopia\CoCassiopia\bin\Debug\CoCassiopia.exe.config
+c:\users\khaled\documents\visual studio 2015\Projects\CoCassiopia\CoCassiopia\bin\Debug\CoCassiopia.exe
+c:\users\khaled\documents\visual studio 2015\Projects\CoCassiopia\CoCassiopia\bin\Debug\CoCassiopia.pdb
+c:\users\khaled\documents\visual studio 2015\Projects\CoCassiopia\CoCassiopia\bin\Debug\EloBuddy.dll
+c:\users\khaled\documents\visual studio 2015\Projects\CoCassiopia\CoCassiopia\bin\Debug\EloBuddy.SDK.dll
+c:\users\khaled\documents\visual studio 2015\Projects\CoCassiopia\CoCassiopia\bin\Debug\SharpDX.Direct3D9.dll
+c:\users\khaled\documents\visual studio 2015\Projects\CoCassiopia\CoCassiopia\bin\Debug\SharpDX.dll
+c:\users\khaled\documents\visual studio 2015\Projects\CoCassiopia\CoCassiopia\bin\Debug\EloBuddy.Sandbox.dll
+c:\users\khaled\documents\visual studio 2015\Projects\CoCassiopia\CoCassiopia\bin\Debug\Newtonsoft.Json.dll
+c:\users\khaled\documents\visual studio 2015\Projects\CoCassiopia\CoCassiopia\obj\Debug\CoCassiopia.csprojResolveAssemblyReference.cache
+c:\users\khaled\documents\visual studio 2015\Projects\CoCassiopia\CoCassiopia\obj\Debug\CoCassiopia.exe
+c:\users\khaled\documents\visual studio 2015\Projects\CoCassiopia\CoCassiopia\obj\Debug\CoCassiopia.pdb
