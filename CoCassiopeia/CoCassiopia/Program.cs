@@ -77,6 +77,7 @@ namespace CoCassiopeia
         private static void OnUpdate(EventArgs args)
         {
             KillSteal();
+
         }
 
 
@@ -107,6 +108,11 @@ namespace CoCassiopeia
 
         private static void GameLoad(EventArgs args)
         {
+
+            //Game On Tick
+
+            Game.OnTick += OnTick;
+
             //Spells
 
             Q = new Spell.Skillshot(SpellSlot.Q, 850, SkillShotType.Circular, 150, null, 75, DamageType.Magical);
@@ -129,17 +135,18 @@ namespace CoCassiopeia
 
             {
                 if (Player.Instance.ChampionName != "Cassiopeia") return;
-                Chat.Print("Welcome to CoCassiopia, Go Break The Game.");
+                Chat.Print("Welcome to CoCassiopeia, Go Break The Game.");
             }
 
             //Main Menu
 
-            FirstMenu = MainMenu.AddMenu("CoCassiopia", "coocle");
-            FirstMenu.AddGroupLabel("CoCassiopia");
+            FirstMenu = MainMenu.AddMenu("CoCassiopeia", "coocle");
+            FirstMenu.AddGroupLabel("CoCassiopeia");
             FirstMenu.AddLabel(
                 "if there are any bugs please report to me on elobuddy or discord" +
                 "Discord: Coocle#0510" +
                 "Elobuddy: coocle");
+
 
             //Combo Menu
 
