@@ -36,6 +36,11 @@ namespace CoCassiopeia
             LastHitMenu,
             SkinMenu;
 
+        private static void Main(string[] args)
+        {
+            Loading.OnLoadingComplete += GameLoad;
+        }
+
         public static float QDamage(Obj_AI_Base target)
         {
             if (Q.IsReady())
@@ -96,13 +101,6 @@ namespace CoCassiopeia
             Orbwalker.OnUnkillableMinion += Orbwalker_OnUnkillableMinion;
             Game.OnTick += GameOnTick;
             Game.OnUpdate += OnUpdate;
-        }
-
-        //Loading Function
-
-        private static void Main(string[] args)
-        {
-            Loading.OnLoadingComplete += GameLoad;
         }
 
         //Game Load
@@ -168,6 +166,7 @@ namespace CoCassiopeia
             KillStealMenu = FirstMenu.AddSubMenu("Killsteal", "KillstealCassC");
             KillStealMenu.Add("UseQKillSteal", new CheckBox("KS with Q", true));
             KillStealMenu.Add("UseEKillSteal", new CheckBox("KS with E", true));
+            
             //LaneClear Menu
 
             LaneClearMenu = FirstMenu.AddSubMenu("Lane Clear", "LaneclearCassC");
@@ -185,6 +184,7 @@ namespace CoCassiopeia
             LaneClearMenu.Add("UseWJungleClear", new CheckBox("Use W", false));
             LaneClearMenu.Add("UseEJungleClear", new CheckBox("Use E", true));
             LaneClearMenu.Add("ManaManagerJungleClear", new Slider("Mana Manager", 40, 0, 100));
+            
             //Last Hit Menu
 
             LastHitMenu = FirstMenu.AddSubMenu("Last Hit", "LasthitCassC");
@@ -201,6 +201,13 @@ namespace CoCassiopeia
             DrawMenu.Add("DrawW", new CheckBox("Draw W", true));
             DrawMenu.Add("DrawE", new CheckBox("Draw E", true));
             DrawMenu.Add("DrawR", new CheckBox("Draw R", true));
+
+            //Activator
+
+            ActivatorMenu = FirstMenu.AddSubMenu("Activator", "ActivatorCassC");
+            ActivatorMenu.Add("UseSeraphsEmbrace", new CheckBox("Use Seraph's Embrace?", true));
+            ActivatorMenu.Add("UseZhonyas", new CheckBox("Use Zhonyas Hourglass?", true));
+            ActivatorMenu.Add("UseHPPotion", new CheckBox("Use Health Pot?", true));
 
             //Skin Changer
 
@@ -496,6 +503,9 @@ namespace CoCassiopeia
                 }
             }
         }
+
+        //Activator Method
+
 
         //Draw Method
 
