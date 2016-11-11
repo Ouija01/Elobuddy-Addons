@@ -128,7 +128,7 @@ namespace CoCassiopeia
             //Chat Print
 
             {
-                if (Player.Instance.ChampionName != "Cassiopia") return;
+                if (Player.Instance.ChampionName != "Cassiopeia") return;
                 Chat.Print("Welcome to CoCassiopia, Go Break The Game.");
             }
 
