@@ -22,7 +22,7 @@ namespace CoCassiopeia
 
         private static Spell.Targeted E;
 
-        private static Spell.Chargeable R;
+        private static Spell.Skillshot R;
 
         public static Menu FirstMenu,
             DrawMenu,
@@ -36,16 +36,30 @@ namespace CoCassiopeia
             LastHitMenu,
             SkinMenu;
 
+        private float _lastECast = 0f;
+
+        private float lastQCast = 0f;
+
         private static void Main(string[] args)
         {
             Loading.OnLoadingComplete += GameLoad;
+        }
+
+        public static bool IsChecked(Menu obj, string value)
+        {
+            return obj[value].Cast<CheckBox>().CurrentValue;
+        }
+
+         public static int GetSliderValue(Menu obj, string value)
+        {
+            return obj[value].Cast<Slider>().CurrentValue;
         }
 
         public static float QDamage(Obj_AI_Base target)
         {
             if (Q.IsReady())
                 return Player.Instance.CalculateDamageOnUnit(target, DamageType.Magical,
-                    new[] {0f, 25f, 40f, 55f, 70f, 80f}[Q.Level] + 0.2333f*Player.Instance.TotalMagicalDamage);
+                    new[] {0f, 75f, 120f, 165f, 210f, 240f }[Q.Level] + 0.2333f*Player.Instance.TotalMagicalDamage);
             return 0f;
         }
 
@@ -76,23 +90,9 @@ namespace CoCassiopeia
 
         private static void OnUpdate(EventArgs args)
         {
-            KillSteal();
 
-        }
-
-
-        private static void GameOnTick(EventArgs args)
-        {
             if (Player.Instance.IsDead) return;
 
-            if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
-            { Combo(); }
-            if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Harass))
-            { Harass(); }
-            if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.LaneClear))
-            { LaneClear(); }
-            if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.JungleClear))
-            { JungleClear(); }
 
         }
 
@@ -100,7 +100,6 @@ namespace CoCassiopeia
         {
             Gapcloser.OnGapcloser += Gapcloser_OnGapcloser;
             Orbwalker.OnUnkillableMinion += Orbwalker_OnUnkillableMinion;
-            Game.OnTick += GameOnTick;
             Game.OnUpdate += OnUpdate;
         }
 
@@ -109,20 +108,17 @@ namespace CoCassiopeia
         private static void GameLoad(EventArgs args)
         {
 
-            //Game On Tick
 
-            Game.OnTick += OnTick;
 
             //Spells
 
-            Q = new Spell.Skillshot(SpellSlot.Q, 850, SkillShotType.Circular, 150, null, 75, DamageType.Magical);
+            Q = new Spell.Skillshot(SpellSlot.Q, 850, SkillShotType.Circular, castDelay: 400, spellWidth: 75);
 
-            W = new Spell.Skillshot(SpellSlot.W, 800, SkillShotType.Cone, 250, 2000, 160, DamageType.Magical);
+            W = new Spell.Skillshot(SpellSlot.W, 850, SkillShotType.Circular, spellWidth: 125);
 
-            E = new Spell.Targeted(SpellSlot.E, 700, DamageType.Magical);
+            E = new Spell.Targeted(SpellSlot.E, 700);
 
-            R = new Spell.Chargeable(SpellSlot.R, 825, 825, 03, 250, null, null, DamageType.Magical);
-
+            R = new Spell.Skillshot(SpellSlot.R, 825, SkillShotType.Cone, spellWidth: 80);
             //Initinazling Events
 
             InitEvents();
@@ -140,7 +136,7 @@ namespace CoCassiopeia
 
             //Main Menu
 
-            FirstMenu = MainMenu.AddMenu("CoCassiopeia", "coocle");
+            FirstMenu = MainMenu.AddMenu("CoCassiopeia", "cassiocoocle");
             FirstMenu.AddGroupLabel("CoCassiopeia");
             FirstMenu.AddLabel(
                 "if there are any bugs please report to me on elobuddy or discord" +
@@ -186,11 +182,11 @@ namespace CoCassiopeia
             //JungleClear Menu
 
             JungleClearMenu = FirstMenu.AddSubMenu("Jungle Clear", "JungleclearCassC");
-            LaneClearMenu.AddGroupLabel("Jungle Clear Menu");
-            LaneClearMenu.Add("UseQJungleClear", new CheckBox("Use Q", true));
-            LaneClearMenu.Add("UseWJungleClear", new CheckBox("Use W", false));
-            LaneClearMenu.Add("UseEJungleClear", new CheckBox("Use E", true));
-            LaneClearMenu.Add("ManaManagerJungleClear", new Slider("Mana Manager", 40, 0, 100));
+            JungleClearMenu.AddGroupLabel("Jungle Clear Menu");
+            JungleClearMenu.Add("UseQJungleClear", new CheckBox("Use Q", true));
+            JungleClearMenu.Add("UseWJungleClear", new CheckBox("Use W", false));
+            JungleClearMenu.Add("UseEJungleClear", new CheckBox("Use E", true));
+            JungleClearMenu.Add("ManaManagerJungleClear", new Slider("Mana Manager", 40, 0, 100));
             
             //Last Hit Menu
 
@@ -238,93 +234,81 @@ namespace CoCassiopeia
             Drawing();
         }
 
-        //On Tick
-
-        private static void OnTick(EventArgs args)
-        {
-            if (Orbwalker.ActiveModesFlags.Equals(Orbwalker.ActiveModes.Combo))
-            {
-                Combo();
-            }
-        }
-
         //Combo Method
 
-        private static void Combo()
+        public void Combo()
         {
-            var target = TargetSelector.GetTarget(Q.Range, DamageType.Magical);
-            var mark =
-                EntityManager.Heroes.Enemies.Where(x => x.IsValid && Q.IsInRange(x) && x.HasBuff("cassiopeiaqdebuff"));
-            var focus = ComboMenu["Proitize"].Cast<CheckBox>().CurrentValue
-                ? mark != null ? mark.OrderBy(x => TargetSelector.GetPriority(x)).LastOrDefault() : null
-                : null;
+            var target = TargetSelector.GetTarget(R.Range + 400, DamageType.Magical);
 
-            if (target == null)
+            if (target == null || !target.IsValidTarget(Q.Range)) return;
+
+            var flash = Player.Spells.FirstOrDefault(a => a.SData.Name == "summonerflash");
+
+            if (IsChecked(ComboMenu, "UseQCombo") && Q.IsReady() && target.IsValidTarget(Q.Range) && target.HasBuffOfType(BuffType.Poison))
             {
-                return;
+                var predictionQ = Q.GetPrediction(target);
+                if (predictionQ.HitChancePercent >= 80)
+                {
+                    Q.Cast(predictionQ.CastPosition);
+                    lastQCast = Game.Time;
+                }
             }
 
-            if (ComboMenu["UseQCombo"].Cast<CheckBox>().CurrentValue)
+            if (IsChecked(ComboMenu, "UseWCombo") && W.IsReady() && target.IsValidTarget(W.Range))
             {
-                var Qpred = Q.GetPrediction(target);
-
-                if (target.IsValidTarget(Q.Range) && Q.IsReady() && Qpred.HitChance >= HitChance.High && focus == null)
+                if (target.HasBuffOfType(BuffType.Poison) && (lastQCast - Game.Time) < -0.43f)
                 {
-                    Q.Cast(target);
-                }
+                    var predictionW = W.GetPrediction(target);
 
-                if (focus != null)
-                {
-                    var QMarkpred = Q.GetPrediction(focus);
-                    if (Qpred.CollisionObjects.Count() == 0)
+                    if (predictionW.HitChancePercent >= 70)
                     {
-                        Q.Cast(Qpred.CastPosition);
+                        W.Cast(predictionW.CastPosition);
+                    }
+                    else
+                    {
+                        if (predictionW.HitChancePercent >= 70)
+                        {
+                            W.Cast(predictionW.CastPosition);
+                        }
                     }
                 }
             }
 
-            if (ComboMenu["UseWCombo"].Cast<CheckBox>().CurrentValue)
+            if (IsChecked(ComboMenu, "UseECombo") && E.IsReady() && target.IsValidTarget(E.Range) &&
+                target.HasBuffOfType(BuffType.Poison) || IsChecked(ComboMenu, "Priotize") && E.CanCast(target))
             {
-                var Wpred = W.GetPrediction(target);
-                if (target.IsValidTarget(W.Range) && W.IsReady() && Wpred.HitChance >= HitChance.High && focus == null)
-                {
-                    W.Cast(target);
-                }
-
-                if (focus != null)
-                {
-                    var WMarkpred = Q.GetPrediction(focus);
-                    if (Wpred.CollisionObjects.Count() == 0)
-                    {
-                        W.Cast(Wpred.CastPosition);
-                    }
-                }
-
+                E.Cast(target);
             }
 
-            if (ComboMenu["UseECombo"].Cast<CheckBox>().CurrentValue)
+            if (IsChecked(ComboMenu, "UseRCombo") && R.IsReady())
             {
-                if (target.IsValidTarget(E.Range) && E.IsReady() && focus == null)
+                if (IsChecked(ComboMenu, "UseFlashCombo") &&
+                    Damage.CalculateDamageOnUnit(Player.Instance, target, DamageType.Magical,
+                        QDamage(target) + WDamage(target) + EDamage(target) + RDamage(target)) > target.Health &&
+                    target.IsFacing(Player.Instance))
                 {
-                    E.Cast();
+                    Player.CastSpell(flash.Slot, target.Position);
+                    Core.DelayAction(() => R.Cast(target), 250);
                 }
-            }
 
-            if (ComboMenu["UseRCombo"].Cast<CheckBox>().CurrentValue
-                && Player.Instance.CountEnemiesInRange(780) >= ComboMenu["UseRCount"].Cast<Slider>().CurrentValue && R.IsReady())
-            {
-                { 
-                    R.Cast();
-                }
-            }
-
-            if (ComboMenu["UseFlashCombo"].Cast<CheckBox>().CurrentValue && SummonerSpells.Flash.IsReady() && R.IsReady() 
-                && Player.Instance.CountEnemiesInRange(1205) >= ComboMenu["UseRCount"].Cast<Slider>().CurrentValue)
-            {
-                SummonerSpells.Flash.Cast(target);
+                var countFacing =
+                    EntityManager.Heroes.Enemies.Count(
+                        t => t.IsValidTarget(R.Range) && target.IsFacing(Player.Instance) && Player.Instance.IsFacing(target));
+                if (GetSliderValue(ComboMenu, "UseRCount") <= countFacing && ProbablyFacing(target) &&
+                    target.IsValidTarget(R.Range - 50))
+                {
                     R.Cast(target);
+                }
             }
         }
+
+        private static bool ProbablyFacing(Obj_AI_Base target)
+        {
+            var predictPos = Prediction.Position.PredictUnitPosition(target, 250);
+
+            return predictPos.Distance(Player.Instance.ServerPosition) < target.ServerPosition.Distance(Player.Instance.ServerPosition);
+        }
+
 
         //Harass Method
 
@@ -484,30 +468,12 @@ namespace CoCassiopeia
 
         public static void Orbwalker_OnUnkillableMinion(Obj_AI_Base target, Orbwalker.UnkillableMinionArgs args)
         {
-            if (target == null || Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo)) return;
-            if (Player.Instance.Mana <= HarassMenu["ManaMangerLastHit"].Cast<Slider>().CurrentValue) return;
-            if (args.RemainingHealth < QDamage(target) && LastHitMenu["UseQLastHit"].Cast<CheckBox>().CurrentValue && Q.IsReady())
+            if (Player.Instance.Mana <= LastHitMenu["ManaMangerLastHit"].Cast<Slider>().CurrentValue) return;
+            if (Q.IsReady() && LastHitMenu["UseQLastHit"].Cast<CheckBox>().CurrentValue &&
+                Orbwalker.LastHitMinion.IsValid &&
+                Orbwalker.LastHitMinion.Health <= Q.GetSpellDamage(Orbwalker.LastHitMinion))
             {
-                var minion = Orbwalker.LaneClearMinionsList.FirstOrDefault();
-                if (minion != null) return;
-                if (minion != null && minion.IsValidTarget())
-                {
-                    var pred = Q.GetPrediction(minion);
-                    if (pred.CollisionObjects.Count() == 0)
-                    {
-                        Q.Cast(pred.CastPosition);
-                    }
-                }
-            }
-
-            if (args.RemainingHealth <= WDamage(target) && LastHitMenu["UseELastHit"].Cast<CheckBox>().CurrentValue && E.IsReady())
-            {
-                var minion = Orbwalker.LaneClearMinionsList.FirstOrDefault();
-                if (minion != null) return;
-                if (minion != null && minion.IsValidTarget())
-                {
-                    E.Cast(minion);
-                }
+                Q.Cast(Orbwalker.LastHitMinion);
             }
         }
 
